@@ -1,19 +1,29 @@
 <template>
   <div id="app">
-    <div class="chartBox">
-      <v-chart class="charts" :options="pie"/>
-    </div>
-    <div class="chartBox">
-      <v-chart class="charts" :options="line"/>
-    </div>
-    <div class="chartBox">
-      <v-chart style="height: 500px" class="charts" :options="scatter"/>
+    <div class="section">
+      <div class="content">
+        <h3>{{ cityList[current].name }}薪资统计图表</h3>
+        <div class="chartBox">
+          <v-chart class="charts" :options="pie"/>
+        </div>
+        <h3>{{ cityList[current].name }}薪资统计图表</h3>
+        <div class="chartBox">
+          <v-chart class="charts" :options="line"/>
+        </div>
+        <h3>{{ cityList[current].name }}薪资地域分布图表</h3>
+        <div class="chartBox">
+          <v-chart style="height: 500px" class="charts" :options="scatter"/>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import changshaData from './assets/data.json'
+import changshaData from './assets/datas/changSha-data.json'
+import shenZhengData from './assets/datas/shenZheng-data.json'
+import shangHaiData from './assets/datas/shangHai-data.json'
+import beiJingData from './assets/datas/beiJing-data.json'
 
 import Vue from 'vue'
 import ECharts from 'vue-echarts'
@@ -34,13 +44,18 @@ export default {
   data() {
     const salaryType = ['面议', '1-5k', '5-8k', '8-10k', '10-13k', '13-15k', '15-20k', '20-25k', '25-30k', '30k+']
     return {
-      changshaData,
+      current: 0,
+      cityList: [ {name: '长沙', geo: [113, 28.21]},
+                  {name: '深圳', geo: [114.07,22.62]},
+                  {name: '上海', geo: [121.48,31.22]}, 
+                  {name: '北京', geo: [116.46,39.92]}],
+      dataList: [changshaData, shenZhengData, shangHaiData, beiJingData],
       salaryType,
     };
   },
   computed: {
     average: function (){
-      return this.changshaData.data.map((val, i) => {
+      return this.dataList[this.current].data.map((val, i) => {
         const re = /^[0-9]+.?[0-9]*/
         if (re.test(val[5])&&re.test(val[6])){
          return parseFloat((val[5] + val[6])/2).toFixed(1)
@@ -68,8 +83,7 @@ export default {
       })
       return {   
         title : {
-          text: '长沙前端工程师薪资分布图',
-          subtext: `数据总数：${changshaData.total}条`,
+          subtext: `总数：${this.dataList[this.current].total}条\n时间：${this.dataList[this.current].date}`,
           x:'center'
         },
         tooltip : {
@@ -100,13 +114,13 @@ export default {
       }
     },
     line: function () {
-      const sortedData = this.changshaData.data.sort(this.sortData(true));
+      const sortedData = this.dataList[this.current].data.sort(this.sortData(true));
       const lineData = this.average.sort(this.sortData(false));
       return {
         color: ['#61a0a8','#006699'],   
         title : {
-          text: '长沙前端工程师薪资分布图',
-          subtext: `数据总数：${changshaData.total}条`,
+          subtext:
+           `总数：${this.dataList[this.current].total}条\n时间：${this.dataList[this.current].date}`,
           x:'center'
         },     
         tooltip : {
@@ -198,7 +212,8 @@ export default {
     scatter: function() {
       let dimension = 4;
       const average = this.average;
-      const mapDatas = changshaData.data.map((val, i) => {
+      const dataCopy = this.dataList[this.current];
+      const mapDatas = dataCopy.data.map((val, i) => {
                   return {
                     name: val[0],
                     value: [
@@ -210,19 +225,17 @@ export default {
                     ]
                   }
                 })
-                console.log(mapDatas)
       return {
         // 加载 bmap 组件
         title: {
-            text: '长沙前端工程师薪资地域分布图',
             textStyle: {
                 color: 'white'
             },
-            subtext: `数据总数：${changshaData.total}条`,
+            subtext: `总数：${dataCopy.total}条\n时间：${this.dataList[this.current].date}`,
             x: 'center'
         },
         bmap: {
-            center: [113, 28.21],
+            center: this.cityList[this.current].geo,
             zoom: 12,
             roam: true,
             mapStyle: {
@@ -380,10 +393,10 @@ export default {
                 { min: 40 }
             ],
             calculable: true,
-            itemWidth: 46,
-            itemHeight: 24,
-            left: 20,
-            top: 20,
+            itemWidth: 36,
+            itemHeight: 20,
+            left: 10,
+            top: 10,
             inverse: true,
             hoverLink: false,
             inRange: {
@@ -408,17 +421,18 @@ export default {
             symbolSize: function(data, params) {
               const i = params.dataIndex
               if (average[i]&&average[i]>=0) {
-                return average[i] / 3 + 10;
+                return average[i] * 3 / 7 + 8;
               }
             },
             label: {
               emphasis: {
                 show: true,
-                formatter: function(param) {
-                    return param.data[0];
+                formatter: function(params) {
+                    let data = dataCopy.data[params.dataIndex]
+                    return data[0];
                 },
                 position: 'top',
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 'bold',
                 color: 'white'
               }
@@ -433,25 +447,25 @@ export default {
         }],
         tooltip: {
             trigger: 'item',
-            padding: [10, 20, 10, 20],
+            triggerOn: 'click',
+            padding: [10, 10, 10, 10],
             backgroundColor: 'rgba(144,152,160,0.7)',
             borderColor: '#ccc',
             borderWidth: 2,
             borderRadius: 4,
             transitionDuration: 0,
-            extraCssText: 'width: 300px;',
+            extraCssText: 'width: 258px;',
             textStyle: {
-                fontSize: 14
+                fontSize: 13
             },
             position: {
-                right: 60,
-                bottom: 20
+                right: 10,
+                bottom: 10
             },
             enterable: true,
-            hideDelay: 500,
+            hideDelay: 666,
             formatter(params) {
-                let data = changshaData.data[params.dataIndex];
-                console.log(params)
+                let data = dataCopy.data[params.dataIndex];
                 let template = '';
                 const makeTemplate = (key, value) => {
                     template += `<li><span>${key}</span>：${value}</li>`;
@@ -527,13 +541,29 @@ export default {
 </script>
 
 <style>
+body{
+  padding: 0;
+  margin: 0;
+}
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  background-color: #4285f4;
+}
+.section{
+  padding: 45px 10px;
+  background: url(./assets/download.png) repeat;
+}
+.content{
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 15px;
+  background: #fff;
+  border: 10px solid #050707;
 }
 .chartBox{
   width: 100%;
