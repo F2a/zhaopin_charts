@@ -1,7 +1,16 @@
 <template>
   <div id="app">
     <div class="section">
-      <div class="content">
+      <div class="content">.
+        <ul class="citys">
+          <li 
+            v-for="(city, i) in cityList"
+            @click="ifmask(i)"
+            :class="{'current': i === current}"
+          >
+            {{ city.name }}
+          </li>
+        </ul>
         <h3>{{ cityList[current].name }}薪资统计图表</h3>
         <div class="chartBox">
           <v-chart class="charts" :options="pie"/>
@@ -16,6 +25,13 @@
         </div>
       </div>
     </div>
+    <div 
+      class="mask" 
+      v-show="mask"
+      :style="{ height: clientHeight + 'px'}"
+    >
+      <p>Loading...</p>
+    </div>    
   </div>
 </template>
 
@@ -46,11 +62,13 @@ export default {
     return {
       current: 0,
       cityList: [ {name: '长沙', geo: [113, 28.21]},
-                  {name: '深圳', geo: [114.07,22.62]},
+                  {name: '深圳', geo: [114,22.6]},
                   {name: '上海', geo: [121.48,31.22]}, 
-                  {name: '北京', geo: [116.46,39.92]}],
+                  {name: '北京', geo: [116.40,39.92]}],
       dataList: [changshaData, shenZhengData, shangHaiData, beiJingData],
       salaryType,
+      clientHeight: 100,
+      mask: true,
     };
   },
   computed: {
@@ -498,6 +516,36 @@ export default {
         }
         return A - B
       }
+    },
+    select: function(index) {
+      this.current = index;
+      // this.maskHide(index)
+      // this.maskHide();
+    },
+    maskHide: function () {
+      this.mask = false;
+    },
+    maskShow: function () {
+      this.mask = true;
+    },
+    ifmask: async function (index) { 
+      // await this.maskShow();
+      // console.log(1)
+      // await this.select(index);
+      // console.log(2)
+      // await this.maskHide();
+      // console.log(3)
+      /**
+       * 因为this.current涉及 echart 的渲染，数据量很大会很卡，所以提前渲染出mask遮罩层，再回调修改current;
+       * 最先是用.then 或者 await 的方式 并不能先渲染遮罩层（this.current和this.mask 虽然不会进入同一个生命周期，但是dom会一起渲染）；
+       * 最后使用setTimeout事件 完成回调操作；大概是与setTimeout是宏事件有关；
+       * 具体原理待研究；
+       */
+      this.maskShow();
+      setTimeout(() => {
+        this.current = index;
+        this.maskHide();
+        }, 0)
     }
   },
   beforeCreate() {
@@ -511,6 +559,8 @@ export default {
   },
   mounted() {
     console.log('挂载完成');
+    this.clientHeight = document.documentElement.clientHeight;
+    this.mask = false;
   },
   beforeUpdate() {
     console.log('数据更新时调用，发生在虚拟 DOM 重新渲染和打补丁之前');
@@ -541,10 +591,6 @@ export default {
 </script>
 
 <style>
-body{
-  padding: 0;
-  margin: 0;
-}
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -552,6 +598,29 @@ body{
   text-align: center;
   color: #2c3e50;
   background-color: #4285f4;
+}
+body{
+  padding: 0;
+  margin: 0;
+}
+.mask{
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100px;
+  background-color: rgb(255,255,255, .5);
+}
+.mask p{
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  color: #4285f4;
+  font-weight: 600;
+  font-size: 21px;
+  text-align: center;
+  text-shadow: 1px 1px 0 #666,-1px -1px 0 #666; 
 }
 .section{
   padding: 45px 10px;
@@ -584,5 +653,29 @@ body{
 }
 .template span {
     color: #efea85;
+}
+ul.citys{ 
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+.citys>li {
+  padding:0;
+  margin:0;
+  list-style:none;
+  overflow: hidden;
+  cursor: pointer;
+  height: 36px;
+  line-height: 36px;
+  padding: 0 18px;
+  margin: 0 15px;
+  border-radius: 18px;
+  border: 1px solid #000;
+}
+.citys>.current{
+  background-color: #4285f4;
+  border: 0;
+  color: #fff;
+  font-weight: 600;
 }
 </style>
