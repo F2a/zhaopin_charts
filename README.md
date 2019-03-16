@@ -8,7 +8,7 @@
 
 ### 展示
 
-(点击查看)[https://f2a.github.io/zhaopin_charts/]
+[点击查看](https://f2a.github.io/zhaopin_charts/)
 
 ### 依赖
 
