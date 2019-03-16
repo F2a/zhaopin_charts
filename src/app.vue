@@ -27,7 +27,7 @@
     </div>
     <div 
       class="mask" 
-      v-if="mask"
+      v-show="mask"
       :style="{ height: clientHeight + 'px'}"
     >
       <p>Loading...</p>
@@ -540,6 +540,7 @@ export default {
        * 最先是用.then 或者 await 的方式 并不能先渲染遮罩层（this.current和this.mask 虽然不会进入同一个生命周期，但是dom会一起渲染）；
        * this.$nextTick 也不行，事件确实是在回调，但是实际上的dom还是一起渲染的
        * 最后使用setTimeout事件 完成回调操作；大概是与setTimeout是宏事件有关；
+       * setTimeout最终的效果也是时有时无的。。。
        * 具体原理待研究；
        */
       // this.maskShow();
