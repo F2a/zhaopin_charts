@@ -8,6 +8,7 @@
 
 ### 展示
 
+(点击查看)[https://f2a.github.io/zhaopin_charts/]
 
 ### 依赖
 
@@ -18,6 +19,6 @@
 
 
 ```
-数据来源 智联招聘 zhaopin.com
+数据来自于智联招聘 zhaopin.com
 ```
 
